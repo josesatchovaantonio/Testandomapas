@@ -10,13 +10,12 @@
     </style>
 </head>
 <body>
-    <h1>Localize um Endereço</h1>
+    <h1>Localize e Trace Rota</h1>
     <input type="text" id="address" placeholder="Digite um endereço" />
-    <button onclick="findLocation()">Localizar</button>
+    <button onclick="findLocation()">Localizar e Traçar</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://nominatim.openstreetmap.org/search?q=&format=json&limit=1"></script>
     <script>
         const map = L.map('map').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -24,31 +23,45 @@
         }).addTo(map);
 
         let marker;
+        let routeLayer;
 
-        function findLocation() {
+        async function findLocation() {
             const address = document.getElementById('address').value;
-            fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.length > 0) {
-                        const lat = data[0].lat;
-                        const lon = data[0].lon;
-                        const latLng = [lat, lon];
-                        
-                        if (marker) {
-                            marker.setLatLng(latLng);
-                        } else {
-                            marker = L.marker(latLng).addTo(map);
-                        }
-                        
-                        map.setView(latLng, 13);
-                    } else {
-                        alert('Endereço não encontrado.');
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
+            const data = await response.json();
+            
+            if (data.length > 0) {
+                const destLat = data[0].lat;
+                const destLon = data[0].lon;
+                const destLatLng = [destLat, destLon];
+
+                if (marker) {
+                    marker.setLatLng(destLatLng);
+                } else {
+                    marker = L.marker(destLatLng).addTo(map);
+                }
+
+                map.setView(destLatLng, 13);
+
+                // Replace with your OpenRouteService API key
+                const apiKey = '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22';
+                const userLocation = [map.getCenter().lat, map.getCenter().lng];
+                const routeResponse = await fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${userLocation.join(',')}&end=${destLatLng.join(',')}`);
+                const routeData = await routeResponse.json();
+
+                if (routeData.routes && routeData.routes.length > 0) {
+                    const route = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                    
+                    if (routeLayer) {
+                        map.removeLayer(routeLayer);
                     }
-                })
-                .catch(error => {
-                    console.error('Erro ao buscar o endereço:', error);
-                });
+                    
+                    routeLayer = L.polyline(route, { color: 'red' }).addTo(map);
+                    map.fitBounds(routeLayer.getBounds());
+                }
+            } else {
+                alert('Endereço não encontrado.');
+            }
         }
     </script>
 </body>
