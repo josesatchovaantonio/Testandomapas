@@ -3,64 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localização com OpenStreetMap</title>
+    <title>Localização e Rota</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
         #map { height: 500px; }
     </style>
 </head>
 <body>
-    <h1>Localize e Trace Rota</h1>
-    <input type="text" id="address" placeholder="Digite um endereço" />
-    <button onclick="findLocation()">Localizar e Traçar</button>
+    <h1>Localize e Calcule Distância</h1>
+    <input type="text" id="destination" placeholder="Digite a coordenada destino (lat,lon)" />
+    <button onclick="findRoute()">Calcular Rota</button>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@openrouteservice/openrouteservice-js@5.6.2/dist/ors-client.min.js"></script>
     <script>
         const map = L.map('map').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        let marker;
-        let routeLayer;
+        let markerCurrent, markerDestination, routeLayer;
 
-        async function findLocation() {
-            const address = document.getElementById('address').value;
-            const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1`);
-            const data = await response.json();
+        const client = new OpenRouteService.Client({
+            api_key: '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22' // Substitua pelo seu token
+        });
+
+        function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(position => {
+                    resolve([position.coords.latitude, position.coords.longitude]);
+                }, reject);
+            });
+        }
+
+        async function findRoute() {
+            const destinationInput = document.getElementById('destination').value.split(',');
+            const destinationLatLng = [parseFloat(destinationInput[0]), parseFloat(destinationInput[1])];
             
-            if (data.length > 0) {
-                const destLat = data[0].lat;
-                const destLon = data[0].lon;
-                const destLatLng = [destLat, destLon];
+            try {
+                const currentLocation = await getCurrentLocation();
+                const start = [currentLocation[0], currentLocation[1]];
+                const end = destinationLatLng;
 
-                if (marker) {
-                    marker.setLatLng(destLatLng);
-                } else {
-                    marker = L.marker(destLatLng).addTo(map);
-                }
+                if (markerCurrent) markerCurrent.setLatLng(start);
+                else markerCurrent = L.marker(start).addTo(map);
 
-                map.setView(destLatLng, 13);
+                if (markerDestination) markerDestination.setLatLng(end);
+                else markerDestination = L.marker(end).addTo(map);
 
-                // Replace with your OpenRouteService API key
-                const apiKey = '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22';
-                const userLocation = [map.getCenter().lat, map.getCenter().lng];
-                const routeResponse = await fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=${apiKey}&start=${userLocation.join(',')}&end=${destLatLng.join(',')}`);
-                const routeData = await routeResponse.json();
+                map.setView(start, 13);
 
-                if (routeData.routes && routeData.routes.length > 0) {
-                    const route = routeData.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                    
-                    if (routeLayer) {
-                        map.removeLayer(routeLayer);
+                if (routeLayer) map.removeLayer(routeLayer);
+
+                const response = await client.directions({
+                    coordinates: [start, end],
+                    profile: 'driving-car',
+                    format: 'geojson'
+                });
+
+                const route = response.routes[0].geometry;
+                const distance = response.routes[0].distance / 1000; // Distância em km
+
+                alert(`Distância: ${distance.toFixed(2)} km`);
+
+                routeLayer = L.geoJSON(route, {
+                    style: {
+                        color: 'red',
+                        weight: 4
                     }
-                    
-                    routeLayer = L.polyline(route, { color: 'red' }).addTo(map);
-                    map.fitBounds(routeLayer.getBounds());
-                }
-            } else {
-                alert('Endereço não encontrado.');
+                }).addTo(map);
+
+                map.fitBounds(routeLayer.getBounds());
+
+            } catch (error) {
+                console.error('Erro ao encontrar a rota:', error);
+                alert('Erro ao encontrar a rota.');
             }
         }
     </script>
