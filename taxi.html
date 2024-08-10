@@ -27,6 +27,10 @@
         button {
             cursor: pointer;
         }
+        #distance {
+            margin-top: 10px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -34,6 +38,7 @@
         <h1>Localize e Calcule Distância</h1>
         <input type="text" id="destination" placeholder="Digite coordenadas destino (lat,lon)" />
         <button onclick="findRoute()">Calcular Rota</button>
+        <div id="distance"></div>
     </div>
     <div id="map"></div>
 
@@ -95,7 +100,7 @@
                 const route = response.routes[0].geometry;
                 const distance = response.routes[0].distance / 1000; // Distância em km
 
-                alert(`Distância: ${distance.toFixed(2)} km`);
+                document.getElementById('distance').textContent = `Distância: ${distance.toFixed(2)} km`;
 
                 routeLayer = L.geoJSON(route, {
                     style: {
@@ -108,7 +113,7 @@
 
             } catch (error) {
                 console.error('Erro ao encontrar a rota:', error);
-                alert('Erro ao encontrar a rota. Verifique as coordenadas e tente novamente.');
+                document.getElementById('distance').textContent = 'Erro ao encontrar a rota. Verifique as coordenadas e tente novamente.';
             }
         }
 
@@ -121,7 +126,7 @@
                 map.setView(start, 13);
             } catch (error) {
                 console.error('Erro ao obter localização:', error);
-                alert('Não foi possível obter a localização atual.');
+                document.getElementById('distance').textContent = 'Não foi possível obter a localização atual.';
             }
         })();
     </script>
