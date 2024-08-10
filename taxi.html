@@ -6,18 +6,41 @@
     <title>Localização e Rota</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        #map { height: 500px; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        #map {
+            height: 600px;
+            width: 100%;
+        }
+        .container {
+            padding: 20px;
+            background: #f4f4f4;
+        }
+        input, button {
+            margin: 5px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
-    <h1>Localize e Calcule Distância</h1>
-    <input type="text" id="destination" placeholder="Digite a coordenada destino (lat,lon)" />
-    <button onclick="findRoute()">Calcular Rota</button>
+    <div class="container">
+        <h1>Localize e Calcule Distância</h1>
+        <input type="text" id="destination" placeholder="Digite coordenadas destino (lat,lon)" />
+        <button onclick="findRoute()">Calcular Rota</button>
+    </div>
     <div id="map"></div>
 
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@openrouteservice/openrouteservice-js@5.6.2/dist/ors-client.min.js"></script>
     <script>
+        // Inicializa o mapa
         const map = L.map('map').setView([0, 0], 13);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -25,22 +48,29 @@
 
         let markerCurrent, markerDestination, routeLayer;
 
+        // Substitua pelo seu token da OpenRouteService
         const client = new OpenRouteService.Client({
-            api_key: '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22' // Substitua pelo seu token
+            api_key: '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22'
         });
 
-        function getCurrentLocation() {
+        // Obtém a localização atual do usuário
+        async function getCurrentLocation() {
             return new Promise((resolve, reject) => {
-                navigator.geolocation.getCurrentPosition(position => {
-                    resolve([position.coords.latitude, position.coords.longitude]);
-                }, reject);
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        resolve([position.coords.latitude, position.coords.longitude]);
+                    }, reject);
+                } else {
+                    reject('Geolocalização não suportada.');
+                }
             });
         }
 
+        // Encontra a rota e calcula a distância
         async function findRoute() {
             const destinationInput = document.getElementById('destination').value.split(',');
             const destinationLatLng = [parseFloat(destinationInput[0]), parseFloat(destinationInput[1])];
-            
+
             try {
                 const currentLocation = await getCurrentLocation();
                 const start = [currentLocation[0], currentLocation[1]];
@@ -78,9 +108,22 @@
 
             } catch (error) {
                 console.error('Erro ao encontrar a rota:', error);
-                alert('Erro ao encontrar a rota.');
+                alert('Erro ao encontrar a rota. Verifique as coordenadas e tente novamente.');
             }
         }
+
+        // Inicializa o mapa com a localização atual
+        (async () => {
+            try {
+                const currentLocation = await getCurrentLocation();
+                const start = [currentLocation[0], currentLocation[1]];
+                markerCurrent = L.marker(start).addTo(map);
+                map.setView(start, 13);
+            } catch (error) {
+                console.error('Erro ao obter localização:', error);
+                alert('Não foi possível obter a localização atual.');
+            }
+        })();
     </script>
 </body>
 </html>
