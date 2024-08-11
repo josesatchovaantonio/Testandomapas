@@ -54,21 +54,11 @@
             }
 
             if (isTracking) {
-                // Ajusta o zoom e mantém a visão atual ao atualizar a localização
                 map.setView([userLat, userLon], map.getZoom());
             }
 
-            // Verifica se chegou ao destino
-            if (destinationLat && destinationLon) {
-                var distance = map.distance([userLat, userLon], [destinationLat, destinationLon]);
-
-                if (distance < 5 && !arrivalAlerted) {
-                    // Alerta de voz
-                    var utterance = new SpeechSynthesisUtterance('Parabéns, você chegou ao destino');
-                    window.speechSynthesis.speak(utterance);
-                    arrivalAlerted = true;
-                }
-            }
+            // Verifica a distância ao destino a cada atualização
+            checkArrival();
         }
 
         // Rastreia a localização do usuário
@@ -83,6 +73,19 @@
                 });
             } else {
                 alert('Geolocalização não é suportada por este navegador.');
+            }
+        }
+
+        // Verifica se chegou ao destino
+        function checkArrival() {
+            if (destinationLat && destinationLon) {
+                var distance = map.distance([userLat, userLon], [destinationLat, destinationLon]);
+
+                if (distance < 5 && !arrivalAlerted) {
+                    var utterance = new SpeechSynthesisUtterance('Parabéns, você chegou ao destino');
+                    window.speechSynthesis.speak(utterance);
+                    arrivalAlerted = true;
+                }
             }
         }
 
@@ -105,13 +108,7 @@
                         map.removeLayer(destinationMarker);
                     }
 
-                    if (!userMarker) {
-                        userMarker = L.marker(userCoords, {title: "Minha localização"}).addTo(map)
-                            .bindPopup("Minha localização atual")
-                            .openPopup();
-                    } else {
-                        userMarker.setLatLng(userCoords);
-                    }
+                    userMarker.setLatLng(userCoords);
 
                     destinationMarker = L.marker([destinationLat, destinationLon], {title: "Destino"}).addTo(map)
                         .bindPopup("Destino")
@@ -125,16 +122,14 @@
                         routeWhileDragging: true
                     }).addTo(map);
 
-                    // Ajusta o mapa para exibir a rota completa
                     var bounds = L.latLngBounds([
                         [userCoords[0], userCoords[1]],
                         [destinationLat, destinationLon]
                     ]);
                     map.fitBounds(bounds);
 
-                    // Desativa o rastreamento para evitar tremores no mapa
-                    isTracking = false;
-                    arrivalAlerted = false; // Reseta o alerta de chegada
+                    isTracking = true;  // Rastreia a nova rota
+                    arrivalAlerted = false;
                 }, function(error) {
                     alert('Erro ao obter localização: ' + error.message);
                 });
@@ -142,6 +137,9 @@
                 alert('Geolocalização não é suportada por este navegador.');
             }
         }
+
+        // Verifica a distância em tempo real a cada 2 segundos
+        setInterval(checkArrival, 2000);
 
         // Inicia o rastreamento da localização do usuário ao carregar a página
         trackUserLocation();
