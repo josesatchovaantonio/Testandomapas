@@ -30,7 +30,7 @@
         var routeControl;
         var userMarker;
         var userLat, userLon;
-        var isTracking = true;
+        var isTracking = true; // Controle de rastreamento
 
         // Adiciona o layer do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -51,7 +51,8 @@
             }
 
             if (isTracking) {
-                map.setView([userLat, userLon], map.getZoom()); // Mantém o zoom atual
+                // Ajusta o zoom e mantém a visão atual ao atualizar a localização
+                map.setView([userLat, userLon], map.getZoom());
             }
         }
 
@@ -73,12 +74,13 @@
         // Mostra a rota até o destino
         function showRoute() {
             var destination = document.getElementById('destination').value;
+            var destCoords = destination.split(',');
+            var destLat = parseFloat(destCoords[0]);
+            var destLon = parseFloat(destCoords[1]);
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
-                    var destCoords = destination.split(',');
-                    var destLat = parseFloat(destCoords[0]);
-                    var destLon = parseFloat(destCoords[1]);
+                    var userCoords = [position.coords.latitude, position.coords.longitude];
 
                     if (routeControl) {
                         map.removeControl(routeControl);
@@ -86,20 +88,21 @@
 
                     routeControl = L.Routing.control({
                         waypoints: [
-                            L.latLng(userLat, userLon),
+                            L.latLng(userCoords[0], userCoords[1]),
                             L.latLng(destLat, destLon)
                         ],
-                        routeWhileDragging: true,
-                        createMarker: function() { return null; } // Não exibe marcadores
+                        routeWhileDragging: true
                     }).addTo(map);
 
-                    // Ajusta o zoom e centraliza o mapa para incluir a rota
+                    // Ajusta o mapa para exibir a rota completa
                     var bounds = L.latLngBounds([
-                        [userLat, userLon],
+                        [userCoords[0], userCoords[1]],
                         [destLat, destLon]
                     ]);
                     map.fitBounds(bounds);
 
+                    // Desativa o rastreamento para evitar tremores no mapa
+                    isTracking = false;
                 }, function(error) {
                     alert('Erro ao obter localização: ' + error.message);
                 });
