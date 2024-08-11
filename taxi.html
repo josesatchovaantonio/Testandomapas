@@ -105,6 +105,18 @@
                         map.removeLayer(destinationMarker);
                     }
 
+                    if (!userMarker) {
+                        userMarker = L.marker(userCoords, {title: "Minha localização"}).addTo(map)
+                            .bindPopup("Minha localização atual")
+                            .openPopup();
+                    } else {
+                        userMarker.setLatLng(userCoords);
+                    }
+
+                    destinationMarker = L.marker([destinationLat, destinationLon], {title: "Destino"}).addTo(map)
+                        .bindPopup("Destino")
+                        .openPopup();
+
                     routeControl = L.Routing.control({
                         waypoints: [
                             L.latLng(userCoords[0], userCoords[1]),
@@ -112,10 +124,6 @@
                         ],
                         routeWhileDragging: true
                     }).addTo(map);
-
-                    destinationMarker = L.marker([destinationLat, destinationLon], {title: "Destino"}).addTo(map)
-                        .bindPopup("Destino")
-                        .openPopup();
 
                     // Ajusta o mapa para exibir a rota completa
                     var bounds = L.latLngBounds([
