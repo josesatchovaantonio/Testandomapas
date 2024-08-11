@@ -3,132 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Localização e Rota</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Mapa de Rota com OpenRouteService</title>
     <style>
+        #map {
+            height: 500px;
+            width: 100%;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-        }
-        #map {
-            height: 600px;
-            width: 100%;
+            box-sizing: border-box;
         }
         .container {
             padding: 20px;
-            background: #f4f4f4;
         }
-        input, button {
-            margin: 5px;
+        input[type="text"] {
+            width: 300px;
             padding: 10px;
-            font-size: 16px;
+            margin-right: 10px;
         }
         button {
+            padding: 10px 20px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
             cursor: pointer;
         }
-        #distance {
-            margin-top: 10px;
-            font-size: 18px;
+        button:hover {
+            background-color: #0056b3;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Localize e Calcule Distância</h1>
-        <input type="text" id="destination" placeholder="Digite coordenadas destino (lat,lon)" />
-        <button onclick="findRoute()">Calcular Rota</button>
-        <div id="distance"></div>
+        <h1>Mapa com Rota</h1>
+        <div id="map"></div>
+        <br>
+        <input type="text" id="destination" placeholder="Digite as coordenadas do destino (ex: -11.784452,19.913560)">
+        <button onclick="calculateRoute()">Mostrar Rota</button>
     </div>
-    <div id="map"></div>
-
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@openrouteservice/openrouteservice-js@5.6.2/dist/ors-client.min.js"></script>
     <script>
-        // Inicializa o mapa
-        const map = L.map('map').setView([0, 0], 13);
+        const map = L.map('map').setView([-11.786157, 19.915239], 13);
+        const apiKey = '5b3ce3597851110001cf6248587df702272946e686dea7c0735a07a0'; // Sua chave da API
+        const orsUrl = 'https://api.openrouteservice.org/v2/directions/foot-walking';
+        
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
         }).addTo(map);
+        
+        // Posição inicial do usuário
+        const userLocation = [-11.786157, 19.915239]; // Substitua pela sua localização atual
 
-        let markerCurrent, markerDestination, routeLayer;
+        L.marker(userLocation).addTo(map)
+            .bindPopup('Sua localização atual')
+            .openPopup();
+        
+        function calculateRoute() {
+            const destinationInput = document.getElementById('destination').value;
+            const [lat, lon] = destinationInput.split(',').map(Number);
+            const destination = [lat, lon];
+            
+            if (destination.length === 2) {
+                fetch(`${orsUrl}?start=${userLocation.join(',')}&end=${destination.join(',')}&api_key=${apiKey}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const route = data.features[0].geometry.coordinates;
+                        const polyline = L.polyline(route.map(coord => [coord[1], coord[0]]), {color: 'blue'}).addTo(map);
+                        map.fitBounds(polyline.getBounds());
 
-        // Substitua pelo seu token da OpenRouteService
-        const client = new OpenRouteService.Client({
-            api_key: '5b3ce3597851110001cf6248daf10f99cbe24ec48fe18c7e6ac86c22'
-        });
-
-        // Obtém a localização atual do usuário
-        async function getCurrentLocation() {
-            return new Promise((resolve, reject) => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(position => {
-                        resolve([position.coords.latitude, position.coords.longitude]);
-                    }, reject);
-                } else {
-                    reject('Geolocalização não suportada.');
-                }
-            });
-        }
-
-        // Encontra a rota e calcula a distância
-        async function findRoute() {
-            const destinationInput = document.getElementById('destination').value.split(',');
-            const destinationLatLng = [parseFloat(destinationInput[0]), parseFloat(destinationInput[1])];
-
-            try {
-                const currentLocation = await getCurrentLocation();
-                const start = [currentLocation[0], currentLocation[1]];
-                const end = destinationLatLng;
-
-                if (markerCurrent) markerCurrent.setLatLng(start);
-                else markerCurrent = L.marker(start).addTo(map);
-
-                if (markerDestination) markerDestination.setLatLng(end);
-                else markerDestination = L.marker(end).addTo(map);
-
-                map.setView(start, 13);
-
-                if (routeLayer) map.removeLayer(routeLayer);
-
-                const response = await client.directions({
-                    coordinates: [start, end],
-                    profile: 'driving-car',
-                    format: 'geojson'
-                });
-
-                const route = response.routes[0].geometry;
-                const distance = response.routes[0].distance / 1000; // Distância em km
-
-                document.getElementById('distance').textContent = `Distância: ${distance.toFixed(2)} km`;
-
-                routeLayer = L.geoJSON(route, {
-                    style: {
-                        color: 'red',
-                        weight: 4
-                    }
-                }).addTo(map);
-
-                map.fitBounds(routeLayer.getBounds());
-
-            } catch (error) {
-                console.error('Erro ao encontrar a rota:', error);
-                document.getElementById('distance').textContent = 'Erro ao encontrar a rota. Verifique as coordenadas e tente novamente.';
+                        L.marker(destination).addTo(map)
+                            .bindPopup('Destino')
+                            .openPopup();
+                    })
+                    .catch(error => console.error('Erro ao buscar rota:', error));
+            } else {
+                alert('Por favor, insira coordenadas válidas.');
             }
         }
-
-        // Inicializa o mapa com a localização atual
-        (async () => {
-            try {
-                const currentLocation = await getCurrentLocation();
-                const start = [currentLocation[0], currentLocation[1]];
-                markerCurrent = L.marker(start).addTo(map);
-                map.setView(start, 13);
-            } catch (error) {
-                console.error('Erro ao obter localização:', error);
-                document.getElementById('distance').textContent = 'Não foi possível obter a localização atual.';
-            }
-        })();
     </script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 </body>
 </html>
