@@ -27,7 +27,7 @@
     <div id="map"></div>
 
     <!-- Adiciona o arquivo de áudio -->
-    <audio id="arrivalSound" src="chegada.mp3"></audio>
+    <audio id="arrivalSound" src="audio/chegada.mp3"></audio>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
@@ -92,7 +92,7 @@
             }
         }
 
-        // Mostra a rota até o destino
+        // Mostra a rota até o destino com a localização mais precisa possível
         function showRoute() {
             var destination = document.getElementById('destination').value;
             var destCoords = destination.split(',');
@@ -101,7 +101,9 @@
 
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(function(position) {
-                    var userCoords = [position.coords.latitude, position.coords.longitude];
+                    userLat = position.coords.latitude;
+                    userLon = position.coords.longitude;
+                    var userCoords = [userLat, userLon];
 
                     if (routeControl) {
                         map.removeControl(routeControl);
@@ -111,7 +113,13 @@
                         map.removeLayer(destinationMarker);
                     }
 
-                    userMarker.setLatLng(userCoords);
+                    if (!userMarker) {
+                        userMarker = L.marker(userCoords, {title: "Minha localização"}).addTo(map)
+                            .bindPopup("Minha localização atual")
+                            .openPopup();
+                    } else {
+                        userMarker.setLatLng(userCoords);
+                    }
 
                     destinationMarker = L.marker([destinationLat, destinationLon], {title: "Destino"}).addTo(map)
                         .bindPopup("Destino")
@@ -134,6 +142,10 @@
                     arrivalAlerted = false;
                 }, function(error) {
                     alert('Erro ao obter localização: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,  // Prioriza alta precisão
+                    timeout: 5000,
+                    maximumAge: 0
                 });
             } else {
                 alert('Geolocalização não é suportada por este navegador.');
