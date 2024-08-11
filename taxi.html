@@ -32,7 +32,6 @@
         var destinationMarker;
         var userLat, userLon;
         var destinationLat, destinationLon;
-        var isTracking = true; // Controle de rastreamento
         var arrivalAlerted = false;
 
         // Adiciona o layer do OpenStreetMap
@@ -53,11 +52,9 @@
                 userMarker.setLatLng([userLat, userLon]);
             }
 
-            if (isTracking) {
-                map.setView([userLat, userLon], map.getZoom());
-            }
+            map.setView([userLat, userLon], map.getZoom());
 
-            // Verifica a distância ao destino a cada atualização
+            // Verifica a distância ao destino
             checkArrival();
         }
 
@@ -81,7 +78,7 @@
             if (destinationLat && destinationLon) {
                 var distance = map.distance([userLat, userLon], [destinationLat, destinationLon]);
 
-                if (distance < 5 && !arrivalAlerted) {
+                if (distance <= 15 && !arrivalAlerted) {  // Limite de 15 metros
                     var utterance = new SpeechSynthesisUtterance('Parabéns, você chegou ao destino');
                     window.speechSynthesis.speak(utterance);
                     arrivalAlerted = true;
@@ -128,7 +125,6 @@
                     ]);
                     map.fitBounds(bounds);
 
-                    isTracking = true;  // Rastreia a nova rota
                     arrivalAlerted = false;
                 }, function(error) {
                     alert('Erro ao obter localização: ' + error.message);
@@ -138,8 +134,8 @@
             }
         }
 
-        // Verifica a distância em tempo real a cada 2 segundos
-        setInterval(checkArrival, 2000);
+        // Verifica a distância em tempo real a cada 1 segundo
+        setInterval(checkArrival, 1000);
 
         // Inicia o rastreamento da localização do usuário ao carregar a página
         trackUserLocation();
