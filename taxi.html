@@ -3,86 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa de Rota com OpenRouteService</title>
+    <title>Mapa em Tempo Real com Rota</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #map {
-            height: 500px;
+            height: 98vh;
             width: 100%;
         }
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        .container {
-            padding: 20px;
-        }
-        input[type="text"] {
-            width: 300px;
+        input, button {
             padding: 10px;
-            margin-right: 10px;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
+            font-size: 16px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Mapa com Rota</h1>
-        <div id="map"></div>
-        <br>
-        <input type="text" id="destination" placeholder="Digite as coordenadas do destino (ex: -11.784452,19.913560)">
-        <button onclick="calculateRoute()">Mostrar Rota</button>
-    </div>
+
+    <h1>Mapa em Tempo Real com Rota</h1>
+    <input type="text" id="destination" placeholder="Digite as coordenadas de destino (ex: -12.599713,13.195995)">
+    <button onclick="showRoute()">Mostrar Rota</button>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
-        const map = L.map('map').setView([-11.786157, 19.915239], 13);
-        const apiKey = '5b3ce3597851110001cf6248587df702272946e686dea7c0735a07a0'; // Sua chave da API
-        const orsUrl = 'https://api.openrouteservice.org/v2/directions/foot-walking';
-        
+        var map = L.map('map').setView([0, 0], 13); // Inicializa o mapa
+        var routeControl;
+        var userMarker;
+        var userLat, userLon;
+
+        // Adiciona o layer do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '© OpenStreetMap'
+            maxZoom: 19
         }).addTo(map);
-        
-        // Posição inicial do usuário
-        const userLocation = [-11.786157, 19.915239]; // Substitua pela sua localização atual
 
-        L.marker(userLocation).addTo(map)
-            .bindPopup('Sua localização atual')
-            .openPopup();
-        
-        function calculateRoute() {
-            const destinationInput = document.getElementById('destination').value;
-            const [lat, lon] = destinationInput.split(',').map(Number);
-            const destination = [lat, lon];
-            
-            if (destination.length === 2) {
-                fetch(`${orsUrl}?start=${userLocation.join(',')}&end=${destination.join(',')}&api_key=${apiKey}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        const route = data.features[0].geometry.coordinates;
-                        const polyline = L.polyline(route.map(coord => [coord[1], coord[0]]), {color: 'blue'}).addTo(map);
-                        map.fitBounds(polyline.getBounds());
+        // Atualiza a localização do usuário e a rota
+        function updateUserLocation(position) {
+            userLat = position.coords.latitude;
+            userLon = position.coords.longitude;
 
-                        L.marker(destination).addTo(map)
-                            .bindPopup('Destino')
-                            .openPopup();
-                    })
-                    .catch(error => console.error('Erro ao buscar rota:', error));
+            if (!userMarker) {
+                userMarker = L.marker([userLat, userLon]).addTo(map)
+                    .bindPopup("Minha localização atual")
+                    .openPopup();
             } else {
-                alert('Por favor, insira coordenadas válidas.');
+                userMarker.setLatLng([userLat, userLon]);
+            }
+
+            map.setView([userLat, userLon], 13);
+
+            if (routeControl) {
+                routeControl.setWaypoints([
+                    L.latLng(userLat, userLon),
+                    routeControl.getWaypoints()[1]
+                ]);
             }
         }
+
+        // Rastreia a localização do usuário
+        function trackUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(updateUserLocation, function(error) {
+                    alert('Erro ao obter localização: ' + error.message);
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                });
+            } else {
+                alert('Geolocalização não é suportada por este navegador.');
+            }
+        }
+
+        // Mostra a rota até o destino
+        function showRoute() {
+            var destination = document.getElementById('destination').value;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var destCoords = destination.split(',');
+                    var destLat = parseFloat(destCoords[0]);
+                    var destLon = parseFloat(destCoords[1]);
+
+                    if (routeControl) {
+                        map.removeControl(routeControl);
+                    }
+
+                    routeControl = L.Routing.control({
+                        waypoints: [
+                            L.latLng(userLat, userLon),
+                            L.latLng(destLat, destLon)
+                        ],
+                        routeWhileDragging: true
+                    }).addTo(map);
+
+                }, function(error) {
+                    alert('Erro ao obter localização: ' + error.message);
+                });
+            } else {
+                alert('Geolocalização não é suportada por este navegador.');
+            }
+        }
+
+        // Inicia o rastreamento da localização do usuário ao carregar a página
+        trackUserLocation();
     </script>
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 </body>
 </html>
