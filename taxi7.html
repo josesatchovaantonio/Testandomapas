@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #map {
-            height: 80vh; /* Ajustado para incluir os botões */
+            height: 80vh;
             width: 100%;
         }
         input, button {
@@ -39,24 +39,21 @@
     <script>
         var map = L.map('map', {
             center: [0, 0],
-            zoom: 13,
-            rotation: 0 // Adiciona uma rotação inicial
+            zoom: 13
         });
         var routeControl;
         var userMarker;
         var destinationMarker;
         var userLat, userLon;
         var destinationLat, destinationLon;
-        var isTracking = true; // Controle de rastreamento
+        var isTracking = true;
         var arrivalAlerted = false;
-        var rotationAngle = 0; // Ângulo de rotação inicial
+        var rotationAngle = 0;
 
-        // Adiciona o layer do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(map);
 
-        // Filtro simples para suavizar a posição
         var lastValidLat, lastValidLon;
 
         function smoothLocation(lat, lon) {
@@ -69,7 +66,6 @@
             return [lat, lon];
         }
 
-        // Atualiza a localização do usuário e a rota em tempo real
         function updateUserLocation(position) {
             var lat = position.coords.latitude;
             var lon = position.coords.longitude;
@@ -87,23 +83,21 @@
                 map.setView([smoothedLat, smoothedLon], map.getZoom());
             }
 
-            // Se o destino estiver definido, recalcular a rota e a distância
             if (destinationLat && destinationLon) {
                 var distance = map.distance([smoothedLat, smoothedLon], [destinationLat, destinationLon]);
                 document.getElementById('info').innerHTML = `
                     <strong>Distância para o destino:</strong> ${Math.round(distance)} metros<br>
+                    <strong>Coordenadas do destino:</strong> ${destinationLat.toFixed(6)}, ${destinationLon.toFixed(6)}<br>
                     <strong>Instruções:</strong><br>
                     <ul id="directions-list"></ul>
                 `;
 
                 if (distance < 25 && !arrivalAlerted) {
-                    // Tocar o áudio MP3
                     var audio = new Audio('chegada.mp3');
                     audio.play();
                     arrivalAlerted = true;
                 }
 
-                // Recalcula a rota se estiver se movendo
                 if (routeControl) {
                     routeControl.setWaypoints([
                         L.latLng(smoothedLat, smoothedLon),
@@ -113,7 +107,6 @@
             }
         }
 
-        // Rastreia a localização do usuário
         function trackUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.watchPosition(updateUserLocation, function(error) {
@@ -128,7 +121,6 @@
             }
         }
 
-        // Define o destino e inicializa o cálculo da rota
         function setDestination() {
             var destination = document.getElementById('destination').value;
             var destCoords = destination.split(',');
@@ -143,7 +135,6 @@
                 .bindPopup("Destino")
                 .openPopup();
 
-            // Inicializa o controle de rota se já houver uma localização inicial
             if (userLat && userLon) {
                 if (routeControl) {
                     map.removeControl(routeControl);
@@ -171,13 +162,11 @@
             }
         }
 
-        // Função para rotacionar o mapa
         function rotateMap() {
             rotationAngle = (rotationAngle + 90) % 360;
             map.setBearing(rotationAngle);
         }
 
-        // Atualiza as direções em tempo real
         function updateDirections() {
             if (routeControl) {
                 routeControl.on('routesfound', function(e) {
@@ -193,10 +182,7 @@
             }
         }
 
-        // Inicia o rastreamento da localização do usuário ao carregar a página
         trackUserLocation();
-
-        // Atualiza as direções sempre que a rota for recalculada
         map.on('moveend', updateDirections);
     </script>
 </body>
