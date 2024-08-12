@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #map {
-            height: 98vh;
+            height: 80vh; /* Ajustado para incluir os botões */
             width: 100%;
         }
         input, button {
@@ -19,19 +19,29 @@
             font-size: 18px;
             margin-top: 10px;
         }
+        #controls {
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
     <h1>Mapa em Tempo Real com Rota</h1>
     <input type="text" id="destination" placeholder="Digite as coordenadas de destino (ex: -12.599713,13.195995)">
     <button onclick="setDestination()">Definir Destino</button>
+    <div id="controls">
+        <button onclick="rotateMap()">Rotacionar Mapa</button>
+    </div>
     <div id="map"></div>
     <div id="info"></div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
-        var map = L.map('map').setView([0, 0], 13); // Inicializa o mapa
+        var map = L.map('map', {
+            center: [0, 0],
+            zoom: 13,
+            rotation: 0 // Adiciona uma rotação inicial
+        });
         var routeControl;
         var userMarker;
         var destinationMarker;
@@ -39,6 +49,7 @@
         var destinationLat, destinationLon;
         var isTracking = true; // Controle de rastreamento
         var arrivalAlerted = false;
+        var rotationAngle = 0; // Ângulo de rotação inicial
 
         // Adiciona o layer do OpenStreetMap
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -158,6 +169,12 @@
                 isTracking = false;
                 arrivalAlerted = false;
             }
+        }
+
+        // Função para rotacionar o mapa
+        function rotateMap() {
+            rotationAngle = (rotationAngle + 90) % 360;
+            map.setBearing(rotationAngle);
         }
 
         // Atualiza as direções em tempo real
