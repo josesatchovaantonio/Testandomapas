@@ -7,19 +7,12 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <style>
         #map {
-            height: 80vh;
+            height: 98vh;
             width: 100%;
         }
         input, button {
             padding: 10px;
             font-size: 16px;
-            margin-top: 10px;
-        }
-        #info {
-            font-size: 18px;
-            margin-top: 10px;
-        }
-        #controls {
             margin-top: 10px;
         }
     </style>
@@ -28,69 +21,38 @@
     <h1>Mapa em Tempo Real com Rota</h1>
     <input type="text" id="destination" placeholder="Digite as coordenadas de destino (ex: -12.599713,13.195995)">
     <button onclick="setDestination()">Definir Destino</button>
-    <div id="controls">
-        <button onclick="rotateMap()">Rotacionar Mapa</button>
-    </div>
     <div id="map"></div>
-    <div id="info"></div>
 
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
     <script>
-        var map = L.map('map', {
-            center: [0, 0],
-            zoom: 13
-        });
+        var map = L.map('map').setView([0, 0], 13);
         var routeControl;
-        var userMarker;
-        var destinationMarker;
+        var userMarker, destinationMarker;
         var userLat, userLon;
         var destinationLat, destinationLon;
-        var isTracking = true;
         var arrivalAlerted = false;
-        var rotationAngle = 0;
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19
         }).addTo(map);
 
-        var lastValidLat, lastValidLon;
-
-        function smoothLocation(lat, lon) {
-            if (lastValidLat && lastValidLon) {
-                lat = (lat + lastValidLat) / 2;
-                lon = (lon + lastValidLon) / 2;
-            }
-            lastValidLat = lat;
-            lastValidLon = lon;
-            return [lat, lon];
-        }
-
         function updateUserLocation(position) {
-            var lat = position.coords.latitude;
-            var lon = position.coords.longitude;
-            var [smoothedLat, smoothedLon] = smoothLocation(lat, lon);
+            userLat = position.coords.latitude;
+            userLon = position.coords.longitude;
 
             if (!userMarker) {
-                userMarker = L.marker([smoothedLat, smoothedLon], {title: "Minha localização"}).addTo(map)
+                userMarker = L.marker([userLat, userLon], {title: "Minha localização"}).addTo(map)
                     .bindPopup("Minha localização atual")
                     .openPopup();
             } else {
-                userMarker.setLatLng([smoothedLat, smoothedLon]);
+                userMarker.setLatLng([userLat, userLon]);
             }
 
-            if (isTracking) {
-                map.setView([smoothedLat, smoothedLon], map.getZoom());
-            }
+            map.setView([userLat, userLon], map.getZoom());
 
             if (destinationLat && destinationLon) {
-                var distance = map.distance([smoothedLat, smoothedLon], [destinationLat, destinationLon]);
-                document.getElementById('info').innerHTML = `
-                    <strong>Distância para o destino:</strong> ${Math.round(distance)} metros<br>
-                    <strong>Coordenadas do destino:</strong> ${destinationLat.toFixed(6)}, ${destinationLon.toFixed(6)}<br>
-                    <strong>Instruções:</strong><br>
-                    <ul id="directions-list"></ul>
-                `;
+                var distance = map.distance([userLat, userLon], [destinationLat, destinationLon]);
 
                 if (distance < 25 && !arrivalAlerted) {
                     var audio = new Audio('chegada.mp3');
@@ -100,7 +62,7 @@
 
                 if (routeControl) {
                     routeControl.setWaypoints([
-                        L.latLng(smoothedLat, smoothedLon),
+                        L.latLng(userLat, userLon),
                         L.latLng(destinationLat, destinationLon)
                     ]);
                 }
@@ -139,6 +101,7 @@
                 if (routeControl) {
                     map.removeControl(routeControl);
                 }
+
                 routeControl = L.Routing.control({
                     waypoints: [
                         L.latLng(userLat, userLon),
@@ -151,39 +114,16 @@
                     createMarker: function() { return null; }
                 }).addTo(map);
 
-                var bounds = L.latLngBounds([
+                map.fitBounds(L.latLngBounds([
                     [userLat, userLon],
                     [destinationLat, destinationLon]
-                ]);
-                map.fitBounds(bounds);
+                ]));
 
-                isTracking = false;
                 arrivalAlerted = false;
             }
         }
 
-        function rotateMap() {
-            rotationAngle = (rotationAngle + 90) % 360;
-            map.setBearing(rotationAngle);
-        }
-
-        function updateDirections() {
-            if (routeControl) {
-                routeControl.on('routesfound', function(e) {
-                    var routes = e.routes[0].instructions;
-                    var list = document.getElementById('directions-list');
-                    list.innerHTML = '';
-                    routes.forEach(function(instruction) {
-                        var li = document.createElement('li');
-                        li.textContent = instruction.text;
-                        list.appendChild(li);
-                    });
-                });
-            }
-        }
-
         trackUserLocation();
-        map.on('moveend', updateDirections);
     </script>
 </body>
 </html>
