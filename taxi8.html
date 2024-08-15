@@ -32,32 +32,23 @@
 
         function getUserLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    position => {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        map.setView([lat, lon], 13);
-                        if (userMarker) {
-                            userMarker.setLatLng([lat, lon]);
-                        } else {
-                            userMarker = L.marker([lat, lon]).addTo(map)
-                                .bindPopup('Sua Localização')
-                                .openPopup();
-                        }
-                        if (destinationMarker) {
-                            showRoute([lat, lon], destinationMarker.getLatLng());
-                        }
-                    },
-                    error => {
-                        console.error('Erro ao obter a localização: ', error);
-                        alert('Não foi possível obter a sua localização. Verifique as permissões do navegador.');
-                    },
-                    {
-                        enableHighAccuracy: true, // Mais precisão
-                        timeout: 5000, // Tempo máximo para obter a localização
-                        maximumAge: 0 // Não usar localização em cache
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    map.setView([lat, lon], 13);
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lon]);
+                    } else {
+                        userMarker = L.marker([lat, lon]).addTo(map)
+                            .bindPopup('Sua Localização')
+                            .openPopup();
                     }
-                );
+                    if (destinationMarker) {
+                        showRoute([lat, lon], destinationMarker.getLatLng());
+                    }
+                }, error => {
+                    alert('Não foi possível obter a sua localização.');
+                });
             } else {
                 alert('Geolocalização não é suportada pelo seu navegador.');
             }
