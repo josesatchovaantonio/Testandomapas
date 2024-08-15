@@ -1,134 +1,101 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mapa em Tempo Real com Rota</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <title>Mapa com Rota</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
     <style>
-        #map {
-            height: 98vh;
-            width: 100%;
-        }
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-            margin-top: 10px;
-        }
+        #map { height: 600px; width: 100%; }
+        .container { padding: 20px; }
     </style>
 </head>
 <body>
-    <h1>Mapa em Tempo Real com Rota</h1>
-    <input type="text" id="destination" placeholder="Digite as coordenadas de destino (ex: -12.599713,13.195995)">
-    <button onclick="setDestination()">Definir Destino</button>
-    <div id="map"></div>
+    <div class="container">
+        <h1>Mapa com Rota</h1>
+        <input type="text" id="coords" placeholder="Digite coordenadas (lat, lon)">
+        <button onclick="addMarker()">Adicionar Destino</button>
+        <div id="map"></div>
+    </div>
 
-    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet-routing-machine@3.2.12/dist/leaflet-routing-machine.js"></script>
-    <script src="https://unpkg.com/@mapbox/polyline@1.1.1/index.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <script>
         const map = L.map('map').setView([0, 0], 13);
-        let routeControl, userMarker, destinationMarker;
-        let userLat, userLon, destinationLat, destinationLon;
-        let isTracking = true, arrivalAlerted = false;
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19
+        const tileLayer = L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=i2fjTMbYUMJ6RB4OjWXB', {
+            attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(map);
 
-        // Função para atualizar a localização do usuário
-        function updateUserLocation(position) {
-            userLat = position.coords.latitude;
-            userLon = position.coords.longitude;
+        let userMarker, destinationMarker;
+        let routeControl;
 
-            if (!userMarker) {
-                userMarker = L.marker([userLat, userLon], {title: "Minha localização"}).addTo(map)
-                    .bindPopup("Minha localização atual")
-                    .openPopup();
-            } else {
-                userMarker.setLatLng([userLat, userLon]);
-            }
-
-            if (isTracking) {
-                map.setView([userLat, userLon], map.getZoom());
-            }
-
-            if (destinationLat && destinationLon) {
-                const distance = map.distance([userLat, userLon], [destinationLat, destinationLon]);
-
-                if (distance < 25 && !arrivalAlerted) {
-                    const audio = new Audio('chegada.mp3');
-                    audio.play();
-                    arrivalAlerted = true;
-                }
-
-                if (routeControl) {
-                    routeControl.setWaypoints([
-                        L.latLng(userLat, userLon),
-                        L.latLng(destinationLat, destinationLon)
-                    ]);
-                }
-            }
-        }
-
-        // Função para rastrear a localização do usuário
-        function trackUserLocation() {
+        function getUserLocation() {
             if (navigator.geolocation) {
-                navigator.geolocation.watchPosition(updateUserLocation, (error) => {
-                    console.error('Erro ao obter localização:', error.message);
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000, // Aumenta o timeout para melhorar a confiabilidade
-                    maximumAge: 5000 // Permite algum cache de dados
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    map.setView([lat, lon], 13);
+                    if (userMarker) {
+                        userMarker.setLatLng([lat, lon]);
+                    } else {
+                        userMarker = L.marker([lat, lon]).addTo(map)
+                            .bindPopup('Sua Localização')
+                            .openPopup();
+                    }
+                    if (destinationMarker) {
+                        showRoute([lat, lon], destinationMarker.getLatLng());
+                    }
+                }, error => {
+                    alert('Não foi possível obter a sua localização.');
                 });
             } else {
-                alert('Geolocalização não é suportada por este navegador.');
+                alert('Geolocalização não é suportada pelo seu navegador.');
             }
         }
 
-        // Função para definir o destino e atualizar a rota
-        function setDestination() {
-            const destination = document.getElementById('destination').value;
-            const [lat, lon] = destination.split(',').map(Number);
-            destinationLat = lat;
-            destinationLon = lon;
+        function addMarker() {
+            const coords = document.getElementById('coords').value.split(',');
+            const lat = parseFloat(coords[0].trim());
+            const lon = parseFloat(coords[1].trim());
+
+            if (isNaN(lat) || isNaN(lon)) {
+                alert('Por favor, insira coordenadas válidas.');
+                return;
+            }
 
             if (destinationMarker) {
                 map.removeLayer(destinationMarker);
             }
 
-            destinationMarker = L.marker([destinationLat, destinationLon], {title: "Destino"}).addTo(map)
-                .bindPopup("Destino")
+            destinationMarker = L.marker([lat, lon]).addTo(map)
+                .bindPopup('Destino')
                 .openPopup();
 
-            if (userLat && userLon) {
-                if (routeControl) {
-                    map.removeControl(routeControl);
-                }
-                routeControl = L.Routing.control({
-                    waypoints: [
-                        L.latLng(userLat, userLon),
-                        L.latLng(destinationLat, destinationLon)
-                    ],
-                    router: L.Routing.osrmv1({
-                        serviceUrl: 'https://router.project-osrm.org/route/v1'
-                    }),
-                    routeWhileDragging: true,
-                    createMarker: () => null
-                }).addTo(map);
-
-                map.fitBounds(L.latLngBounds([
-                    [userLat, userLon],
-                    [destinationLat, destinationLon]
-                ]));
-
-                isTracking = false;
-                arrivalAlerted = false;
+            if (userMarker) {
+                showRoute(userMarker.getLatLng(), destinationMarker.getLatLng());
             }
         }
 
-        // Inicia o rastreamento da localização do usuário
-        trackUserLocation();
+        function showRoute(start, end) {
+            if (routeControl) {
+                map.removeControl(routeControl);
+            }
+
+            routeControl = L.Routing.control({
+                waypoints: [
+                    L.latLng(start),
+                    L.latLng(end)
+                ],
+                routeWhileDragging: true,
+                lineOptions: {
+                    styles: [{ color: 'red', opacity: 0.6, weight: 4 }]
+                }
+            }).addTo(map);
+        }
+
+        // Initialize map with user's location
+        getUserLocation();
     </script>
 </body>
 </html>
