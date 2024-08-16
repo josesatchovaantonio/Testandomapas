@@ -7,54 +7,20 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            font-family: Arial, sans-serif;
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            height: 100%;
-            box-sizing: border-box;
-        }
-        #map { 
-            height: 80%; 
-            width: 100%; 
-            margin-top: 20px;
-        }
-        .controls {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 600px;
-        }
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            margin-right: 10px;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; }
+        .container { display: flex; flex-direction: column; align-items: center; padding: 20px; height: 100%; box-sizing: border-box; }
+        #map { height: 80%; width: 100%; margin-top: 20px; }
+        .controls { display: flex; justify-content: space-between; width: 100%; max-width: 600px; }
+        button { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; background-color: #4CAF50; color: white; cursor: pointer; }
+        button:hover { background-color: #45a049; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Mapa com Rota</h1>
         <div class="controls">
-            <input type="text" id="coords" placeholder="Digite coordenadas (lat, lon)">
-            <button onclick="addMarker()">Adicionar Destino</button>
+            <button onclick="getUserLocation()">Obter Localização Atual</button>
+            <button onclick="addDestinationMarker()">Adicionar Destino</button>
         </div>
         <div id="map"></div>
     </div>
@@ -62,7 +28,7 @@
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
     <script>
-        const map = L.map('map').setView([0, 0], 2);
+        const map = L.map('map').setView([0, 0], 13);
 
         L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=i2fjTMbYUMJ6RB4OjWXB', {
             attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -70,7 +36,6 @@
 
         let userMarker, destinationMarker, routeControl;
 
-        // Função para obter e definir a localização do usuário
         function getUserLocation() {
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(position => {
@@ -97,32 +62,27 @@
             }
         }
 
-        // Função para adicionar marcador de destino
-        function addMarker() {
-            const inputCoords = document.getElementById('coords').value.split(',');
-            const lat = parseFloat(inputCoords[0].trim());
-            const lon = parseFloat(inputCoords[1].trim());
+        function addDestinationMarker() {
+            // Ação para adicionar um marcador de destino, sem precisar do input manual
+            // Pode ser através de clique no mapa ou outro método
+            map.once('click', function(e) {
+                const { lat, lng } = e.latlng;
 
-            if (isNaN(lat) || isNaN(lon)) {
-                alert('Por favor, insira coordenadas válidas.');
-                return;
-            }
+                if (destinationMarker) {
+                    map.removeLayer(destinationMarker);
+                }
 
-            if (destinationMarker) {
-                map.removeLayer(destinationMarker);
-            }
+                destinationMarker = L.marker([lat, lng], { draggable: false })
+                    .addTo(map)
+                    .bindPopup('Destino')
+                    .openPopup();
 
-            destinationMarker = L.marker([lat, lon], { draggable: false })
-                .addTo(map)
-                .bindPopup('Destino')
-                .openPopup();
-
-            if (userMarker) {
-                showRoute(userMarker.getLatLng(), destinationMarker.getLatLng());
-            }
+                if (userMarker) {
+                    showRoute(userMarker.getLatLng(), destinationMarker.getLatLng());
+                }
+            });
         }
 
-        // Função para mostrar a rota entre o usuário e o destino
         function showRoute(start, end) {
             if (routeControl) {
                 map.removeControl(routeControl);
@@ -138,9 +98,6 @@
                 addWaypoints: false
             }).addTo(map);
         }
-
-        // Inicializar o mapa com a localização do usuário
-        getUserLocation();
     </script>
 </body>
 </html>
