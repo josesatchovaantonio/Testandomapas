@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa com Rota</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.css">
+    <style>
+        #map { height: 600px; width: 100%; }
+        .container { padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mapa com Rota</h1>
+        <input type="text" id="coords" placeholder="Digite coordenadas (lat, lon)">
+        <button onclick="addMarker()">Adicionar Destino</button>
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-routing-machine/dist/leaflet-routing-machine.js"></script>
+    <script>
+        const map = L.map('map').setView([0, 0], 13);
+
+        L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=i2fjTMbYUMJ6RB4OjWXB', {
+            attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        }).addTo(map);
+
+        let userMarker, destinationMarker, routeControl;
+
+        // Função para obter e definir a localização do usuário
+        function getUserLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const { latitude, longitude } = position.coords;
+                    map.setView([latitude, longitude], 13);
+
+                    if (!userMarker) {
+                        userMarker = L.marker([latitude, longitude], { draggable: false })
+                            .addTo(map)
+                            .bindPopup('Sua Localização')
+                            .openPopup();
+                    } else {
+                        userMarker.setLatLng([latitude, longitude]);
+                    }
+
+                    if (destinationMarker) {
+                        showRoute([latitude, longitude], destinationMarker.getLatLng());
+                    }
+                }, () => {
+                    alert('Não foi possível obter a sua localização.');
+                });
+            } else {
+                alert('Geolocalização não é suportada pelo seu navegador.');
+            }
+        }
+
+        // Função para adicionar marcador de destino
+        function addMarker() {
+            const inputCoords = document.getElementById('coords').value.split(',');
+            const lat = parseFloat(inputCoords[0].trim());
+            const lon = parseFloat(inputCoords[1].trim());
+
+            if (isNaN(lat) || isNaN(lon)) {
+                alert('Por favor, insira coordenadas válidas.');
+                return;
+            }
+
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+            }
+
+            destinationMarker = L.marker([lat, lon], { draggable: false })
+                .addTo(map)
+                .bindPopup('Destino')
+                .openPopup();
+
+            if (userMarker) {
+                showRoute(userMarker.getLatLng(), destinationMarker.getLatLng());
+            }
+        }
+
+        // Função para mostrar a rota entre o usuário e o destino
+        function showRoute(start, end) {
+            if (routeControl) {
+                map.removeControl(routeControl);
+            }
+
+            routeControl = L.Routing.control({
+                waypoints: [L.latLng(start), L.latLng(end)],
+                routeWhileDragging: false,
+                lineOptions: {
+                    styles: [{ color: 'blue', opacity: 0.7, weight: 5 }]
+                },
+                draggableWaypoints: false,
+                addWaypoints: false
+            }).addTo(map);
+        }
+
+        // Inicializar o mapa com a localização do usuário
+        getUserLocation();
+    </script>
+</body>
+</html>
