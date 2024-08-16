@@ -30,7 +30,7 @@
     <script>
         const map = L.map('map').setView([0, 0], 13);
 
-        L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=i2fjTMbYUMJ6RB4OjWXB', {
+        L.tileLayer('https://api.maptiler.com/maps/streets/{z}/{x}/{y}.png?key=YOUR_MAPTILER_KEY', {
             attribution: '&copy; <a href="https://www.maptiler.com/copyright/">MapTiler</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         }).addTo(map);
 
@@ -56,15 +56,13 @@
                     }
                 }, () => {
                     alert('Não foi possível obter a sua localização.');
-                });
+                }, { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 });
             } else {
                 alert('Geolocalização não é suportada pelo seu navegador.');
             }
         }
 
         function addDestinationMarker() {
-            // Ação para adicionar um marcador de destino, sem precisar do input manual
-            // Pode ser através de clique no mapa ou outro método
             map.once('click', function(e) {
                 const { lat, lng } = e.latlng;
 
