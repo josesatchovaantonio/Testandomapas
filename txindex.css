@@ -1,0 +1,370 @@
+/* Garantir que o conteúdo não seja escondido pelo header fixo */
+body {
+    padding-top: 60px; /* Ajuste o valor conforme a altura do header */
+    display: flex;
+  flex-direction: column;
+  background-color: #000;
+}
+
+/* Ajustar os estilos do conteúdo para não ter espaço em branco */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%; /* Garantir que o site ocupe toda a largura da tela */
+    overflow-x: hidden; /* Evitar rolagem horizontal */
+    overflow-y: auto; /* Permite a rolagem vertical */
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    
+}
+
+/* Ocultar a barra de rolagem em navegadores WebKit (Chrome, Safari) */
+body::-webkit-scrollbar {
+    display: none;
+}
+
+/* Ocultar a barra de rolagem no Firefox */
+body {
+    scrollbar-width: none;
+}
+
+/* Resto do estilo para o site */
+div#site {
+    width: 100%;
+    height: auto;
+    position: relative;
+}
+
+/* Background Video */
+.video-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -1;
+}
+
+/* RGBA Overlay */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7); /* Dark transparent overlay */
+    z-index: 1;
+}
+
+/* Header and Menu */
+header {
+    position: fixed; /* Alterar de relative para fixed */
+    top: 0; /* Manter o menu no topo */
+    left: 0; /* Garantir que o menu esteja alinhado à esquerda */
+    width: 96.5%; /* Ocupa toda a largura da tela */
+    padding: 5px 1% 5px 2.5%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-image: linear-gradient(130deg, #000 83%, #fcb900 -50%);
+    box-shadow: 0 0.5px 1.5px #ccc7;
+    z-index: 200;
+}
+
+/* Logo */
+a.logo {
+    text-decoration: none;
+    width: 10%;
+    margin-left: 2%;
+}
+
+a.logo img {
+    width: 100%;
+    height: 3rem;
+
+}
+
+/* Navigation Links */
+.nav-links {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+    width:80%;
+}
+
+.nav-links a {
+    color: #fff;
+    font-size: 18px;
+    position: relative;
+    text-decoration: none;
+}
+
+.nav-links a svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: #fff;
+}
+
+/* News Notification Badge */
+.news-badge {
+    position: absolute;
+    top: -0.45rem;
+    margin-left:-0.6rem;
+    color: #fff;
+    font-size: 9px;
+    padding: 0.3rem 0.2rem;
+    border-radius: 50%;
+    background-color: red;
+}
+
+/** Área dos blocos de conteúdo  */  
+#conteudo {
+    width: 100%;
+    padding: 10px 20px 5rem 20px;
+    box-sizing: border-box;
+    margin-top:5rem;
+    position: fixed;
+    overflow: scroll;
+    height: 90%;
+}
+
+#conteudo #bloco-btns {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding-top: ;
+}
+
+#bloco-btns .c3 {
+    width: 32.5%; /* Ajuste conforme necessário para o layout */
+    aspect-ratio: 1 / 1; /* Garante que o elemento seja quadrado */
+    text-shadow: 
+        1px 1px 0 #fff, 
+        -1px -1px 0 #fff,
+        1px -1px 0 #fff,
+        -1px 1px 0 #fff;
+}
+
+
+
+
+
+
+#conteudo #bloco-publ {
+    width:100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    background-color: yellow;
+    z-index: 50;
+    margin-top: ;
+    height: 50vh;
+}
+
+#bloco-publ .c2{
+    width: 48%; /* Inicialmente 100% para permitir flexbox responsivo */
+    height: 23rem; /* Ajuste a altura conforme necessário */
+    background-color: rgba(126, 146, 207, 0.808);
+        padding: 5px 10px;
+                border-radius: 5px;
+
+
+}
+
+
+.bloco {
+    border-radius: 10px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* Alterado para sombra suave */
+    color: #02033d;
+    text-align: center;
+    transition: transform 0.6s ease-in-out, box-shadow 0.6s ease-in-out;
+    transform-style: preserve-3d;
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none; /* Remove sublinhado dos links */
+    
+    z-index: 50;
+}
+
+
+
+
+.bloco:hover {
+    transform: rotateY(15deg); /* Menos rotação para maior visibilidade */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Aumenta a sombra ao passar o mouse */
+}
+
+
+
+
+
+
+.bloco1 {
+    background-color: rgba(255, 215, 0, 0.8); /* Amarelo ouro */
+}
+
+.bloco2 {
+    background-color: rgba(0, 191, 255, 0.8); /* Azul profundo */
+}
+
+.bloco3 {
+    background-color: rgba(255, 105, 180, 0.8); /* Rosa quente */
+}
+
+.bloco4 {
+    background-color: rgba(31,51,133,0.8); /* Verde limão */
+}
+
+.bloco5 {
+    background-color: rgba(255, 69, 0, 0.8); /* Vermelho laranja */
+}
+
+.bloco6 {
+    background-color: rgba(100, 149, 237, 0.8); /* Azul claro */
+}
+
+
+
+/* Flexbox responsivo */
+@media (max-width: 1068px) {
+    .bloco {
+        width: ;
+    }
+}
+
+.fas {
+    font-size: 50px;
+    color: #000;
+}
+
+/* CSS para o Rodapé */
+footer {
+    position: relative;
+    width: 96%;
+    padding: 20px 2%;
+    background-color:rgba(0,0,0,0.7) ; /* Fundo transparente muito escuro */
+    color: #fff;
+    text-align: center;
+    z-index: 2;
+    margin-top: auto;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid #ccc5;
+    border-width: 100%;
+}
+
+div#mt a{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font: oblique bold 12pt arial,helvetica,sans-serif;
+  text-decoration: none;
+}
+
+div#mt a span{
+  background-color: #fcb900;
+  color: #02033d;
+  padding: 5px 10px;
+  transform: skew(25deg);
+}
+
+
+div#mt a img{
+  width: 5rem;
+  height: 5rem;
+}
+
+
+.footer-links {
+    margin-top:1.5rem;
+}
+.footer-content p {
+    font:oblique bold 10pt arial,helvetica,sans-serif;
+    display: flex;
+    flex-flow: row;
+    align-items: center;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+}
+
+.footer-content p a{
+color: #00eeff;
+margin-left: 6px;
+}
+.footer-links a {
+    color: #fcb900;
+    text-decoration: none;
+
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+
+
+
+
+
+
+
+/* Media Query para telas muito pequenas (260px a 320px) */
+@media screen and (min-width: 260px) and (max-width: 320px) {
+    .bloco i {
+        font-size: 18px; /* Tamanho do ícone */
+        margin-bottom: 12px;
+    }
+    
+    .bloco h3 {
+        font-size: 8pt; /* Tamanho do texto */
+    }
+}
+
+/* Media Query para telas pequenas (321px a 480px) */
+@media screen and (min-width: 321px) and (max-width: 480px) {
+    .bloco i {
+        font-size: 22px; /* Aumenta o tamanho do ícone */
+        margin-bottom: 15px;
+    }
+    
+    .bloco h3 {
+        font-size: 10pt; /* Tamanho do texto */
+    }
+}
+
+/* Media Query para telas médias (481px a 768px) */
+@media screen and (min-width: 481px) and (max-width: 768px) {
+    .bloco i {
+        font-size: 26px; /* Aumenta ainda mais o tamanho do ícone */
+        margin-bottom: 18px;
+    }
+    
+    .bloco h3 {
+        font-size: 12pt; /* Tamanho do texto */
+    }
+}
+
+/* Media Query para telas grandes (769px e acima) */
+@media screen and (min-width: 769px) {
+    .bloco i {
+        font-size: 30px; /* Aumenta o tamanho do ícone significativamente */
+        margin-bottom: 20px;
+    }
+    
+    .bloco h3 {
+        font-size: 14pt; /* Tamanho do texto */
+    }
+}
